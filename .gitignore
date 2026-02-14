@@ -60,3 +60,63 @@ fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
+
+
+
+### macOS ###
+.DS_Store
+
+### Xcode ###
+DerivedData/
+build/
+*.xcuserstate
+xcuserdata/
+**/*.xcworkspace/xcuserdata/
+**/*.xcodeproj/xcuserdata/
+
+# Xcode SCM / checkout metadata
+*.xccheckout
+*.xcscmblueprint
+
+# User-specific Xcode files
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+
+### Swift Package Manager ###
+.build/
+.swiftpm/xcode/package.xcworkspace/
+**/xcshareddata/swiftpm/configuration/
+
+### CocoaPods ###
+Pods/
+
+### Carthage ###
+Carthage/Build/
+
+### fastlane ###
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+### SwiftData / local database artifacts  ###
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.log
+
+### Secrets / Signing (絶対コミット禁止) ###
+*.p12
+*.cer
+*.mobileprovision
+*.key
+*.env
+
+
+# Example: Separate catalogs/folders for sensitive assets
+**/PrivateAssets.xcassets/
+**/SecretsAssets.xcassets/
+**/Resources/Private/
