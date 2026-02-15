@@ -120,3 +120,8 @@ fastlane/test_output/
 **/PrivateAssets.xcassets/
 **/SecretsAssets.xcassets/
 **/Resources/Private/
+
+
+# for tasking logging files
+**/tasks
+*r.sh
