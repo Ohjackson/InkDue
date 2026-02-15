@@ -81,6 +81,13 @@ final class SwiftDataAppRepository: AppRepository {
         return try modelContext.fetch(descriptor).first
     }
 
+    func fetchWordSRSList() throws -> [WordSRS] {
+        let descriptor = FetchDescriptor<WordSRS>(
+            sortBy: [SortDescriptor(\.updatedAt)]
+        )
+        return try modelContext.fetch(descriptor)
+    }
+
     func upsertWordSRS(_ srs: WordSRS) throws {
         if let storedSRS = try fetchWordSRS(wordId: srs.wordId) {
             storedSRS.step = WordSRS.clampStep(srs.step)

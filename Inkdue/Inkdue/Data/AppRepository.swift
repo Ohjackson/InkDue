@@ -10,6 +10,7 @@ protocol AppRepository {
     func deleteWordItem(id: UUID) throws
 
     func fetchWordSRS(wordId: UUID) throws -> WordSRS?
+    func fetchWordSRSList() throws -> [WordSRS]
     func upsertWordSRS(_ srs: WordSRS) throws
 
     func addReviewEvent(_ event: ReviewEvent) throws
