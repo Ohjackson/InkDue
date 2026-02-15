@@ -6,6 +6,10 @@ struct AppContainer {
     static let live: AppContainer = {
         let schema = Schema([
             Item.self,
+            AppState.self,
+            WordItem.self,
+            WordSRS.self,
+            ReviewEvent.self,
         ])
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
