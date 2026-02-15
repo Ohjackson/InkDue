@@ -2,6 +2,7 @@ import SwiftData
 
 struct AppContainer {
     let modelContainer: ModelContainer
+    let repository: any AppRepository
 
     static let live: AppContainer = {
         let schema = Schema([
@@ -15,7 +16,8 @@ struct AppContainer {
 
         do {
             let modelContainer = try ModelContainer(for: schema, configurations: [configuration])
-            return AppContainer(modelContainer: modelContainer)
+            let repository = SwiftDataAppRepository(modelContainer: modelContainer)
+            return AppContainer(modelContainer: modelContainer, repository: repository)
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }
