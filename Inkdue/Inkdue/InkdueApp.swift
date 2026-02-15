@@ -13,6 +13,12 @@ struct InkdueApp: App {
     private let container = AppContainer.live
     private let router = AppRouter()
 
+    init() {
+#if DEBUG
+        PolicyInvariantChecks.runAll()
+#endif
+    }
+
     var body: some Scene {
         WindowGroup {
             router.makeRootView()
