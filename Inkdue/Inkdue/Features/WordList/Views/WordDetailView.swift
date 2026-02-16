@@ -44,14 +44,20 @@ struct WordDetailView: View {
 
     @ViewBuilder
     private var formSection: some View {
-        if let errorMessage = viewModel.state.errorMessage {
+        if let appErrorBanner = AppErrorHandler.bannerContent(
+            for: viewModel.state.appViewState,
+            messageOverride: viewModel.state.errorMessage
+        ) {
             AppBannerView(
-                content: AppBannerContent(
-                    style: .error,
+                content: appErrorBanner,
+                onAction: { viewModel.send(.reload) },
+                onClose: { viewModel.send(.clearError) }
+            )
+        } else if let errorMessage = viewModel.state.errorMessage {
+            AppBannerView(
+                content: AppErrorHandler.actionFailureBanner(
                     title: "Word update failed",
                     message: errorMessage,
-                    actionTitle: "Retry",
-                    isBlocking: false
                 ),
                 onAction: { viewModel.send(.reload) },
                 onClose: { viewModel.send(.clearError) }

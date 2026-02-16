@@ -32,10 +32,39 @@ enum AppErrorHandler {
         }
     }
 
-    static func bannerContent(for state: AppViewState) -> AppBannerContent? {
+    static func bannerContent(
+        for state: AppViewState,
+        messageOverride: String? = nil
+    ) -> AppBannerContent? {
         guard case let .error(errorState) = state else {
             return nil
         }
-        return bannerContent(for: errorState)
+
+        let base = bannerContent(for: errorState)
+        guard let messageOverride, !messageOverride.isEmpty else {
+            return base
+        }
+
+        return AppBannerContent(
+            style: base.style,
+            title: base.title,
+            message: messageOverride,
+            actionTitle: base.actionTitle,
+            isBlocking: base.isBlocking
+        )
+    }
+
+    static func actionFailureBanner(
+        title: String,
+        message: String,
+        actionTitle: String? = "Retry"
+    ) -> AppBannerContent {
+        AppBannerContent(
+            style: .error,
+            title: title,
+            message: message,
+            actionTitle: actionTitle,
+            isBlocking: false
+        )
     }
 }

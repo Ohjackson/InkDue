@@ -55,12 +55,10 @@ struct CSVImportView: View {
 
             if let errorMessage = viewModel.state.errorMessage {
                 AppBannerView(
-                    content: AppBannerContent(
-                        style: .error,
+                    content: AppErrorHandler.actionFailureBanner(
                         title: "Import failed",
                         message: errorMessage,
-                        actionTitle: nil,
-                        isBlocking: false
+                        actionTitle: nil
                     ),
                     onAction: nil,
                     onClose: { viewModel.send(.clearError) }

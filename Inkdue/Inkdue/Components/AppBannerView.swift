@@ -72,7 +72,7 @@ struct AppBannerView: View {
 
             Spacer(minLength: 8)
 
-            if let onClose {
+            if let onClose, !content.isBlocking {
                 Button(action: onClose) {
                     Image(systemName: "xmark")
                         .font(.footnote.weight(.bold))

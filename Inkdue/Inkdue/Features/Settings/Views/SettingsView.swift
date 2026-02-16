@@ -22,14 +22,20 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var contentSection: some View {
-        if let errorMessage = viewModel.state.errorMessage {
+        if let appErrorBanner = AppErrorHandler.bannerContent(
+            for: viewModel.state.appViewState,
+            messageOverride: viewModel.state.errorMessage
+        ) {
             AppBannerView(
-                content: AppBannerContent(
-                    style: .error,
+                content: appErrorBanner,
+                onAction: { viewModel.send(.reload) },
+                onClose: { viewModel.send(.clearError) }
+            )
+        } else if let errorMessage = viewModel.state.errorMessage {
+            AppBannerView(
+                content: AppErrorHandler.actionFailureBanner(
                     title: "Settings load failed",
                     message: errorMessage,
-                    actionTitle: "Retry",
-                    isBlocking: false
                 ),
                 onAction: { viewModel.send(.reload) },
                 onClose: { viewModel.send(.clearError) }
