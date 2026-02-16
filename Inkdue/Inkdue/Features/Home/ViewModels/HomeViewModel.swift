@@ -24,6 +24,10 @@ final class HomeViewModel: ObservableObject {
                 return "Evening"
             }
         }
+
+        var canStartMorningSession: Bool {
+            currentPhase == .morning && morningQueueCount > 0
+        }
     }
 
     enum Action {
@@ -63,6 +67,10 @@ final class HomeViewModel: ObservableObject {
 
     func makeCSVImportViewModel() -> CSVImportViewModel {
         CSVImportViewModel(repository: repository)
+    }
+
+    func makeMorningSessionViewModel() -> MorningSessionViewModel {
+        MorningSessionViewModel(repository: repository)
     }
 
     private func loadHome(isInitialLoad: Bool) {

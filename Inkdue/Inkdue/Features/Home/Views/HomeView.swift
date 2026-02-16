@@ -59,9 +59,11 @@ struct HomeView: View {
 
         case .normal:
             dashboardSection
+            sessionActionSection
 
         case let .empty(emptyState):
             dashboardSection
+            sessionActionSection
             emptySection(emptyState)
 
         case .error:
@@ -106,6 +108,40 @@ struct HomeView: View {
                 value: viewModel.state.eveningQueueCount,
                 detail: "New: \(viewModel.state.eveningNewCount)"
             )
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.secondary.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    @ViewBuilder
+    private var sessionActionSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Session")
+                .font(.headline)
+
+            if viewModel.state.currentPhase == .morning {
+                NavigationLink {
+                    MorningSessionView(
+                        viewModel: viewModel.makeMorningSessionViewModel(),
+                        onSessionCompleted: { viewModel.send(.reload) }
+                    )
+                } label: {
+                    HStack {
+                        Text("Start Morning")
+                        Spacer()
+                        Text("\(viewModel.state.morningQueueCount) cards")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(!viewModel.state.canStartMorningSession)
+            } else {
+                Text("Current phase is \(viewModel.state.phaseTitle). Morning starts when phase returns to morning.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
