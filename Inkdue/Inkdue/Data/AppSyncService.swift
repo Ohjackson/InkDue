@@ -43,14 +43,20 @@ final class AppSyncService: ObservableObject, AppSyncServiceProtocol {
     }
 
     private let repository: any AppRepository
+    private let remoteStore: any SyncRemoteStore
     private let monitor: NWPathMonitor
     private let monitorQueue = DispatchQueue(label: "com.coban.Inkdue.sync.monitor")
     private var isNetworkReachable = true
     private var autoRetryTask: Task<Void, Never>?
     private let maxAutoRetryCount = 3
 
-    init(repository: any AppRepository, monitor: NWPathMonitor = NWPathMonitor()) {
+    init(
+        repository: any AppRepository,
+        remoteStore: any SyncRemoteStore,
+        monitor: NWPathMonitor = NWPathMonitor()
+    ) {
         self.repository = repository
+        self.remoteStore = remoteStore
         self.monitor = monitor
         configureNetworkMonitor()
     }
@@ -73,9 +79,26 @@ final class AppSyncService: ObservableObject, AppSyncServiceProtocol {
         }
 
         do {
-            try repository.save()
+            let localSnapshot = try makeLocalSnapshot()
+            let remoteSnapshot = try await remoteStore.pullSnapshot()
+            let resolvedSnapshot = SyncConflictResolver.resolve(
+                local: localSnapshot,
+                remote: remoteSnapshot
+            )
+
+            if resolvedSnapshot != localSnapshot {
+                try applyResolvedSnapshot(
+                    resolvedSnapshot,
+                    previousLocal: localSnapshot
+                )
+            }
+
+            try await remoteStore.pushSnapshot(resolvedSnapshot)
             snapshot.mode = .idle
-            snapshot.message = messageForSuccess(trigger: trigger)
+            snapshot.message = messageForSuccess(
+                trigger: trigger,
+                mergedConflicts: remoteSnapshot != nil && resolvedSnapshot != localSnapshot
+            )
             snapshot.lastSuccessAt = .now
             snapshot.retryCount = 0
         } catch {
@@ -137,7 +160,14 @@ final class AppSyncService: ObservableObject, AppSyncServiceProtocol {
         }
     }
 
-    private func messageForSuccess(trigger: SyncTrigger) -> String {
+    private func messageForSuccess(
+        trigger: SyncTrigger,
+        mergedConflicts: Bool
+    ) -> String {
+        if mergedConflicts {
+            return "Sync completed. Conflict rules applied."
+        }
+
         switch trigger {
         case .appForeground:
             return "Synced on app resume."
@@ -145,6 +175,78 @@ final class AppSyncService: ObservableObject, AppSyncServiceProtocol {
             return "Manual sync completed."
         case .retry:
             return "Retry sync completed."
+        }
+    }
+
+    private func makeLocalSnapshot() throws -> SyncPayload {
+        let appState = try repository.fetchOrCreateAppState()
+        let wordSRSList = try repository.fetchWordSRSList()
+
+        return SyncPayload(
+            appState: AppStateSyncRecord(
+                currentStudyDayIndex: appState.currentStudyDayIndex,
+                currentPhase: appState.currentPhase,
+                lastOpenedAt: appState.lastOpenedAt,
+                updatedAt: appState.updatedAt
+            ),
+            wordSRSRecords: wordSRSList.map { srs in
+                WordSRSSyncRecord(
+                    wordId: srs.wordId,
+                    step: srs.step,
+                    introducedDayIndex: srs.introducedDayIndex,
+                    firstTestPlannedDayIndex: srs.firstTestPlannedDayIndex,
+                    firstTestPlannedPhase: srs.firstTestPlannedPhase,
+                    nextReviewDayIndex: srs.nextReviewDayIndex,
+                    lastReviewedDayIndex: srs.lastReviewedDayIndex,
+                    lastReviewedPhase: srs.lastReviewedPhase,
+                    lastResult: srs.lastResult,
+                    recoveryDueDayIndex: srs.recoveryDueDayIndex,
+                    lastAgainAt: srs.lastAgainAt,
+                    updatedAt: srs.updatedAt
+                )
+            }
+            .sorted { lhs, rhs in
+                lhs.wordId.uuidString < rhs.wordId.uuidString
+            }
+        )
+    }
+
+    private func applyResolvedSnapshot(
+        _ resolved: SyncPayload,
+        previousLocal: SyncPayload
+    ) throws {
+        if resolved.appState != previousLocal.appState {
+            try repository.updateAppState { state in
+                state.currentStudyDayIndex = resolved.appState.currentStudyDayIndex
+                state.currentPhase = resolved.appState.currentPhase
+                state.lastOpenedAt = resolved.appState.lastOpenedAt
+            }
+        }
+
+        let localByWordID = Dictionary(
+            uniqueKeysWithValues: previousLocal.wordSRSRecords.map { ($0.wordId, $0) }
+        )
+
+        for record in resolved.wordSRSRecords {
+            if localByWordID[record.wordId] == record {
+                continue
+            }
+
+            let merged = WordSRS(
+                wordId: record.wordId,
+                step: record.step,
+                introducedDayIndex: record.introducedDayIndex,
+                firstTestPlannedDayIndex: record.firstTestPlannedDayIndex,
+                firstTestPlannedPhase: record.firstTestPlannedPhase,
+                nextReviewDayIndex: record.nextReviewDayIndex,
+                lastReviewedDayIndex: record.lastReviewedDayIndex,
+                lastReviewedPhase: record.lastReviewedPhase,
+                lastResult: record.lastResult,
+                recoveryDueDayIndex: record.recoveryDueDayIndex,
+                lastAgainAt: record.lastAgainAt,
+                updatedAt: record.updatedAt
+            )
+            try repository.upsertWordSRS(merged)
         }
     }
 }

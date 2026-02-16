@@ -18,7 +18,11 @@ struct AppContainer {
         do {
             let modelContainer = try ModelContainer(for: schema, configurations: [configuration])
             let repository = SwiftDataAppRepository(modelContainer: modelContainer)
-            let syncService = AppSyncService(repository: repository)
+            let remoteStore = InMemorySyncRemoteStore()
+            let syncService = AppSyncService(
+                repository: repository,
+                remoteStore: remoteStore
+            )
             return AppContainer(
                 modelContainer: modelContainer,
                 repository: repository,
