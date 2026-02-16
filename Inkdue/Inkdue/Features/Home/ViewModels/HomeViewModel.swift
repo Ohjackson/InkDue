@@ -40,6 +40,10 @@ final class HomeViewModel: ObservableObject {
         var canOpenWordList: Bool {
             true
         }
+
+        var canOpenSettings: Bool {
+            true
+        }
     }
 
     enum Action {
@@ -95,6 +99,10 @@ final class HomeViewModel: ObservableObject {
 
     func makeWordListViewModel() -> WordListViewModel {
         WordListViewModel(repository: repository)
+    }
+
+    func makeSettingsViewModel() -> SettingsViewModel {
+        SettingsViewModel(repository: repository)
     }
 
     private func loadHome(isInitialLoad: Bool) {

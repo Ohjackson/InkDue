@@ -36,7 +36,7 @@ struct EveningSessionView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Main test session")
                 .font(.headline)
-            Text("Card \(viewModel.state.progressText) · cap 50")
+            Text("Card \(viewModel.state.progressText) · cap \(SchedulerPolicy.eveningQueueCap)")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }

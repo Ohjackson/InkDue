@@ -18,8 +18,8 @@ struct BuildEveningQueueUseCase {
 
     init(
         repository: any AppRepository,
-        queueCap: Int = 50,
-        maxNewPerStudyDay: Int = 10
+        queueCap: Int = SchedulerPolicy.eveningQueueCap,
+        maxNewPerStudyDay: Int = SchedulerPolicy.maxNewPerStudyDay
     ) {
         self.repository = repository
         self.queueCap = max(0, queueCap)

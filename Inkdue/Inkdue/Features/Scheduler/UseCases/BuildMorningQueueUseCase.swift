@@ -14,7 +14,10 @@ struct BuildMorningQueueUseCase {
     private let repository: any AppRepository
     private let maxFailedChunk: Int
 
-    init(repository: any AppRepository, maxFailedChunk: Int = 15) {
+    init(
+        repository: any AppRepository,
+        maxFailedChunk: Int = SchedulerPolicy.maxFailedChunk
+    ) {
         self.repository = repository
         self.maxFailedChunk = max(0, maxFailedChunk)
     }

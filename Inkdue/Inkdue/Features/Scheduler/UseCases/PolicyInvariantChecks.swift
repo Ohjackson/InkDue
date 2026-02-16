@@ -45,15 +45,18 @@ enum PolicyInvariantChecks {
 
         let useCase = BuildEveningQueueUseCase(
             repository: repository,
-            queueCap: 50,
-            maxNewPerStudyDay: 10
+            queueCap: SchedulerPolicy.eveningQueueCap,
+            maxNewPerStudyDay: SchedulerPolicy.maxNewPerStudyDay
         )
 
         guard let queue = try? useCase.execute(currentStudyDayIndex: currentStudyDayIndex) else {
             preconditionFailure("Policy check failed: evening queue build should not throw.")
         }
 
-        precondition(queue.count == 50, "Policy check failed: evening queue must be capped at 50.")
+        precondition(
+            queue.count == SchedulerPolicy.eveningQueueCap,
+            "Policy check failed: evening queue must be capped at \(SchedulerPolicy.eveningQueueCap)."
+        )
         precondition(
             queue.allSatisfy { $0.source == .backlog },
             "Policy check failed: backlog must fill queue before ready/new."

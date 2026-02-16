@@ -218,6 +218,19 @@ struct HomeView: View {
             }
             .buttonStyle(.bordered)
             .disabled(!viewModel.state.canOpenWordList)
+
+            NavigationLink {
+                SettingsView(viewModel: viewModel.makeSettingsViewModel())
+            } label: {
+                HStack {
+                    Text("Open Settings")
+                    Spacer()
+                    Text("Sync / Preferences")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .buttonStyle(.bordered)
+            .disabled(!viewModel.state.canOpenSettings)
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)

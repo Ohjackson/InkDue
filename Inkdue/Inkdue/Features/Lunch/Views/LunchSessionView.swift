@@ -101,7 +101,9 @@ struct LunchSessionView: View {
                 .font(.headline)
             summaryRow(title: "Total queue", value: viewModel.state.projectedEveningQueueCount)
             summaryRow(title: "New words", value: viewModel.state.projectedEveningNewCount)
-            Text("Policy: max 50 queue, up to 10 new per study day.")
+            Text(
+                "Policy: max \(SchedulerPolicy.eveningQueueCap) queue, up to \(SchedulerPolicy.maxNewPerStudyDay) new per study day."
+            )
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
