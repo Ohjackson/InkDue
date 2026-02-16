@@ -32,6 +32,10 @@ final class HomeViewModel: ObservableObject {
         var canStartLunchSession: Bool {
             currentPhase == .lunch
         }
+
+        var canStartEveningSession: Bool {
+            currentPhase == .evening
+        }
     }
 
     enum Action {
@@ -79,6 +83,10 @@ final class HomeViewModel: ObservableObject {
 
     func makeLunchSessionViewModel() -> LunchSessionViewModel {
         LunchSessionViewModel(repository: repository)
+    }
+
+    func makeEveningSessionViewModel() -> EveningSessionViewModel {
+        EveningSessionViewModel(repository: repository)
     }
 
     private func loadHome(isInitialLoad: Bool) {

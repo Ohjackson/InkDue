@@ -153,8 +153,24 @@ struct HomeView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(!viewModel.state.canStartLunchSession)
+            } else if viewModel.state.currentPhase == .evening {
+                NavigationLink {
+                    EveningSessionView(
+                        viewModel: viewModel.makeEveningSessionViewModel(),
+                        onSessionCompleted: { viewModel.send(.reload) }
+                    )
+                } label: {
+                    HStack {
+                        Text("Start Evening")
+                        Spacer()
+                        Text("\(viewModel.state.eveningQueueCount) cards")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(!viewModel.state.canStartEveningSession)
             } else {
-                Text("Current phase is \(viewModel.state.phaseTitle). Morning starts when phase returns to morning.")
+                Text("Current phase is \(viewModel.state.phaseTitle).")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
