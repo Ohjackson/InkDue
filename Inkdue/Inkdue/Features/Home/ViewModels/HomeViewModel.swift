@@ -36,6 +36,10 @@ final class HomeViewModel: ObservableObject {
         var canStartEveningSession: Bool {
             currentPhase == .evening
         }
+
+        var canOpenWordList: Bool {
+            true
+        }
     }
 
     enum Action {
@@ -87,6 +91,10 @@ final class HomeViewModel: ObservableObject {
 
     func makeEveningSessionViewModel() -> EveningSessionViewModel {
         EveningSessionViewModel(repository: repository)
+    }
+
+    func makeWordListViewModel() -> WordListViewModel {
+        WordListViewModel(repository: repository)
     }
 
     private func loadHome(isInitialLoad: Bool) {

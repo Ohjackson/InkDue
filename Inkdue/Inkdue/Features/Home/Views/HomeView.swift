@@ -60,10 +60,12 @@ struct HomeView: View {
         case .normal:
             dashboardSection
             sessionActionSection
+            managementSection
 
         case let .empty(emptyState):
             dashboardSection
             sessionActionSection
+            managementSection
             emptySection(emptyState)
 
         case .error:
@@ -194,6 +196,33 @@ struct HomeView: View {
             Text("\(value)")
                 .font(.headline.weight(.semibold))
         }
+    }
+
+    private var managementSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Manage")
+                .font(.headline)
+
+            NavigationLink {
+                WordListView(
+                    viewModel: viewModel.makeWordListViewModel(),
+                    onListChanged: { viewModel.send(.reload) }
+                )
+            } label: {
+                HStack {
+                    Text("Open Word List")
+                    Spacer()
+                    Text("\(viewModel.state.totalWordCount) items")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .buttonStyle(.bordered)
+            .disabled(!viewModel.state.canOpenWordList)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.secondary.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private func emptySection(_ emptyState: AppEmptyState) -> some View {
