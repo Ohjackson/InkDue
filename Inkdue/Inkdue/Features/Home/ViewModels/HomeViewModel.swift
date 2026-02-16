@@ -26,7 +26,11 @@ final class HomeViewModel: ObservableObject {
         }
 
         var canStartMorningSession: Bool {
-            currentPhase == .morning && morningQueueCount > 0
+            currentPhase == .morning
+        }
+
+        var canStartLunchSession: Bool {
+            currentPhase == .lunch
         }
     }
 
@@ -71,6 +75,10 @@ final class HomeViewModel: ObservableObject {
 
     func makeMorningSessionViewModel() -> MorningSessionViewModel {
         MorningSessionViewModel(repository: repository)
+    }
+
+    func makeLunchSessionViewModel() -> LunchSessionViewModel {
+        LunchSessionViewModel(repository: repository)
     }
 
     private func loadHome(isInitialLoad: Bool) {

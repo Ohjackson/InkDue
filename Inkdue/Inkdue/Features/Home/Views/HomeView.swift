@@ -137,6 +137,22 @@ struct HomeView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(!viewModel.state.canStartMorningSession)
+            } else if viewModel.state.currentPhase == .lunch {
+                NavigationLink {
+                    LunchSessionView(
+                        viewModel: viewModel.makeLunchSessionViewModel(),
+                        onSessionCompleted: { viewModel.send(.reload) }
+                    )
+                } label: {
+                    HStack {
+                        Text("Start Lunch")
+                        Spacer()
+                        Text("New: \(viewModel.state.eveningNewCount)")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(!viewModel.state.canStartLunchSession)
             } else {
                 Text("Current phase is \(viewModel.state.phaseTitle). Morning starts when phase returns to morning.")
                     .font(.subheadline)
