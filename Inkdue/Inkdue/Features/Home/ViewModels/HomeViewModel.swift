@@ -13,6 +13,7 @@ final class HomeViewModel: ObservableObject {
         var eveningQueueCount: Int = 0
         var eveningNewCount: Int = 0
         var isImportSheetPresented: Bool = false
+        var syncBannerContent: AppBannerContent?
 
         var phaseTitle: String {
             switch currentPhase {
@@ -48,7 +49,9 @@ final class HomeViewModel: ObservableObject {
 
     enum Action {
         case onAppear
+        case sceneDidBecomeActive
         case reload
+        case retrySync
         case tapImport
         case dismissImport
     }
@@ -56,10 +59,22 @@ final class HomeViewModel: ObservableObject {
     @Published private(set) var state = State()
 
     private let repository: any AppRepository
+    private let syncService: any AppSyncServiceProtocol
     private var didLoadOnAppear = false
+    private var syncTask: Task<Void, Never>?
+    private var cancellables: Set<AnyCancellable> = []
 
-    init(repository: any AppRepository) {
+    init(
+        repository: any AppRepository,
+        syncService: any AppSyncServiceProtocol
+    ) {
         self.repository = repository
+        self.syncService = syncService
+        bindSyncSnapshot()
+    }
+
+    deinit {
+        syncTask?.cancel()
     }
 
     func send(_ action: Action) {
@@ -68,9 +83,16 @@ final class HomeViewModel: ObservableObject {
             guard !didLoadOnAppear else { return }
             didLoadOnAppear = true
             loadHome(isInitialLoad: true)
+            triggerSync(trigger: .appForeground)
+
+        case .sceneDidBecomeActive:
+            triggerSync(trigger: .appForeground)
 
         case .reload:
             loadHome(isInitialLoad: false)
+
+        case .retrySync:
+            triggerSync(trigger: .retry)
 
         case .tapImport:
             state.isImportSheetPresented = true
@@ -102,7 +124,10 @@ final class HomeViewModel: ObservableObject {
     }
 
     func makeSettingsViewModel() -> SettingsViewModel {
-        SettingsViewModel(repository: repository)
+        SettingsViewModel(
+            repository: repository,
+            syncService: syncService
+        )
     }
 
     private func loadHome(isInitialLoad: Bool) {
@@ -155,6 +180,59 @@ final class HomeViewModel: ObservableObject {
             return false
         case .evening:
             return eveningQueueCount == 0
+        }
+    }
+
+    private func bindSyncSnapshot() {
+        state.syncBannerContent = makeSyncBannerContent(from: syncService.currentSnapshot)
+
+        syncService.snapshotPublisher
+            .sink { [weak self] snapshot in
+                guard let self else { return }
+                self.state.syncBannerContent = self.makeSyncBannerContent(from: snapshot)
+            }
+            .store(in: &cancellables)
+    }
+
+    private func triggerSync(trigger: SyncTrigger) {
+        syncTask?.cancel()
+        syncTask = Task { [weak self] in
+            guard let self else { return }
+            _ = await self.syncService.refresh(trigger: trigger)
+        }
+    }
+
+    private func makeSyncBannerContent(from snapshot: SyncSnapshot) -> AppBannerContent? {
+        switch snapshot.mode {
+        case .idle:
+            return nil
+
+        case .syncing:
+            return AppBannerContent(
+                style: .info,
+                title: "Syncing",
+                message: "Checking updates. Local study stays available.",
+                actionTitle: nil,
+                isBlocking: false
+            )
+
+        case .offline:
+            return AppBannerContent(
+                style: .warning,
+                title: "Offline mode",
+                message: "Network is unavailable. Continue with local data.",
+                actionTitle: "Retry",
+                isBlocking: false
+            )
+
+        case .failed:
+            return AppBannerContent(
+                style: .warning,
+                title: "Sync failed",
+                message: "Local progress is safe. Retry when connection is stable.",
+                actionTitle: "Retry",
+                isBlocking: false
+            )
         }
     }
 }

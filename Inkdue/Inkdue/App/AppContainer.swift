@@ -3,6 +3,7 @@ import SwiftData
 struct AppContainer {
     let modelContainer: ModelContainer
     let repository: any AppRepository
+    let syncService: any AppSyncServiceProtocol
 
     static let live: AppContainer = {
         let schema = Schema([
@@ -17,7 +18,12 @@ struct AppContainer {
         do {
             let modelContainer = try ModelContainer(for: schema, configurations: [configuration])
             let repository = SwiftDataAppRepository(modelContainer: modelContainer)
-            return AppContainer(modelContainer: modelContainer, repository: repository)
+            let syncService = AppSyncService(repository: repository)
+            return AppContainer(
+                modelContainer: modelContainer,
+                repository: repository,
+                syncService: syncService
+            )
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }

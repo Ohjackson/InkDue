@@ -2,6 +2,7 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject private var viewModel: HomeViewModel
+    @Environment(\.scenePhase) private var scenePhase
 
     init(viewModel: HomeViewModel) {
         _viewModel = StateObject(wrappedValue: viewModel)
@@ -32,6 +33,10 @@ struct HomeView: View {
             .onAppear {
                 viewModel.send(.onAppear)
             }
+            .onChange(of: scenePhase) { _, newPhase in
+                guard newPhase == .active else { return }
+                viewModel.send(.sceneDidBecomeActive)
+            }
         }
     }
 
@@ -53,6 +58,16 @@ struct HomeView: View {
 
     @ViewBuilder
     private var contentSection: some View {
+        if let syncBannerContent = viewModel.state.syncBannerContent {
+            AppBannerView(
+                content: syncBannerContent,
+                onAction: syncBannerContent.actionTitle == nil ? nil : {
+                    viewModel.send(.retrySync)
+                },
+                onClose: nil
+            )
+        }
+
         switch viewModel.state.appViewState {
         case let .loading(loadingState):
             loadingSection(loadingState)
@@ -300,6 +315,9 @@ struct HomeView: View {
 
 #Preview {
     HomeView(
-        viewModel: HomeViewModel(repository: AppContainer.live.repository)
+        viewModel: HomeViewModel(
+            repository: AppContainer.live.repository,
+            syncService: AppContainer.live.syncService
+        )
     )
 }

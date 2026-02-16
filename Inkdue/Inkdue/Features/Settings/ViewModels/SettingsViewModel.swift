@@ -12,7 +12,9 @@ final class SettingsViewModel: ObservableObject {
         var todayReviewCount: Int = 0
         var syncStatusMessage: String = "Local mode"
         var lastSyncAttemptAt: Date?
+        var lastSyncSuccessAt: Date?
         var isSyncing: Bool = false
+        var syncRetryCount: Int = 0
         var syncCooldownRemainingSeconds: Int = 0
         var errorMessage: String?
         var appVersion: String = "-"
@@ -55,19 +57,28 @@ final class SettingsViewModel: ObservableObject {
     @Published private(set) var state = State()
 
     private let repository: any AppRepository
+    private let syncService: any AppSyncServiceProtocol
     private var didLoadOnAppear = false
     private var syncCooldownTask: Task<Void, Never>?
+    private var syncTask: Task<Void, Never>?
     private let syncCooldownSeconds = 5
+    private var cancellables: Set<AnyCancellable> = []
 
-    init(repository: any AppRepository) {
+    init(
+        repository: any AppRepository,
+        syncService: any AppSyncServiceProtocol
+    ) {
         self.repository = repository
+        self.syncService = syncService
         state.appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "-"
         state.buildNumber = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "-"
         state.bundleIdentifier = Bundle.main.bundleIdentifier ?? "-"
+        bindSyncSnapshot()
     }
 
     deinit {
         syncCooldownTask?.cancel()
+        syncTask?.cancel()
     }
 
     func send(_ action: Action) {
@@ -112,23 +123,14 @@ final class SettingsViewModel: ObservableObject {
 
     private func runManualSync() {
         guard state.canRunManualSync else { return }
-        state.isSyncing = true
         state.errorMessage = nil
+        startSyncCooldown(seconds: syncCooldownSeconds)
 
-        do {
-            try repository.save()
-
-            let now = Date()
-            state.lastSyncAttemptAt = now
-            state.syncStatusMessage = "Sync refresh requested. Continuing with local data."
-            state.isSyncing = false
-
-            startSyncCooldown(seconds: syncCooldownSeconds)
-            loadSettings(isInitialLoad: false)
-        } catch {
-            state.isSyncing = false
-            state.appViewState = .error(.sync)
-            state.errorMessage = error.localizedDescription
+        syncTask?.cancel()
+        syncTask = Task { [weak self] in
+            guard let self else { return }
+            _ = await self.syncService.refresh(trigger: .manual)
+            self.loadSettings(isInitialLoad: false)
         }
     }
 
@@ -155,5 +157,24 @@ final class SettingsViewModel: ObservableObject {
                 }
             }
         }
+    }
+
+    private func bindSyncSnapshot() {
+        updateSyncState(from: syncService.currentSnapshot)
+
+        syncService.snapshotPublisher
+            .sink { [weak self] snapshot in
+                guard let self else { return }
+                self.updateSyncState(from: snapshot)
+            }
+            .store(in: &cancellables)
+    }
+
+    private func updateSyncState(from snapshot: SyncSnapshot) {
+        state.isSyncing = snapshot.mode == .syncing
+        state.syncStatusMessage = snapshot.message
+        state.lastSyncAttemptAt = snapshot.lastAttemptAt
+        state.lastSyncSuccessAt = snapshot.lastSuccessAt
+        state.syncRetryCount = snapshot.retryCount
     }
 }

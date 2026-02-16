@@ -21,7 +21,10 @@ struct InkdueApp: App {
 
     var body: some Scene {
         WindowGroup {
-            router.makeRootView(repository: container.repository)
+            router.makeRootView(
+                repository: container.repository,
+                syncService: container.syncService
+            )
         }
         .modelContainer(container.modelContainer)
     }

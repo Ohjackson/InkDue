@@ -79,6 +79,19 @@ struct SettingsView: View {
                 settingRow(title: "Last attempt", value: "Not yet")
             }
 
+            if let lastSyncSuccessAt = viewModel.state.lastSyncSuccessAt {
+                settingRow(
+                    title: "Last success",
+                    value: lastSyncSuccessAt.formatted(
+                        Date.FormatStyle(date: .abbreviated, time: .shortened)
+                    )
+                )
+            } else {
+                settingRow(title: "Last success", value: "Not yet")
+            }
+
+            settingRow(title: "Retry count", value: "\(viewModel.state.syncRetryCount)")
+
             Button(viewModel.state.manualSyncButtonTitle) {
                 viewModel.send(.runManualSync)
             }
@@ -180,6 +193,11 @@ struct SettingsView: View {
 
 #Preview {
     NavigationStack {
-        SettingsView(viewModel: SettingsViewModel(repository: AppContainer.live.repository))
+        SettingsView(
+            viewModel: SettingsViewModel(
+                repository: AppContainer.live.repository,
+                syncService: AppContainer.live.syncService
+            )
+        )
     }
 }
