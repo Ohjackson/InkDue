@@ -14,6 +14,7 @@ struct CSVImportView: View {
                     inputSection
                     actionSection
                     previewSection
+                    resultSection
                 }
                 .padding(16)
             }
@@ -94,6 +95,31 @@ struct CSVImportView: View {
                 .padding(14)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color.secondary.opacity(0.08))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+        }
+    }
+
+    private var resultSection: some View {
+        Group {
+            if let result = viewModel.state.lastCommitResult {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Import Result")
+                        .font(.headline)
+
+                    summaryRow(title: "Added", value: result.addedCount)
+                    summaryRow(
+                        title: "Skipped duplicates",
+                        value: result.skippedDuplicateCount
+                    )
+                    summaryRow(
+                        title: "Skipped invalid",
+                        value: result.skippedInvalidCount
+                    )
+                }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.green.opacity(0.08))
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
         }

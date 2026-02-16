@@ -46,6 +46,7 @@ final class CSVImportViewModel: ObservableObject {
         case let .updateRawText(text):
             state.rawText = text
             state.preview = nil
+            state.lastCommitResult = nil
             state.errorMessage = nil
 
         case .buildPreview:
